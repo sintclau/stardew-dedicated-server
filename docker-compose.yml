@@ -18,6 +18,9 @@ services:
 
     environment:
       SCREEN_RES: "1280x720x24"
+      # Enables the VNC + web console (for first-time world creation & admin).
+      # Leave empty to disable entirely. CHANGE THIS.
+      VNC_PASSWORD: "change-me"
 
     volumes:
       - ./game:/data/game                                    # extracted Linux game build
@@ -31,6 +34,12 @@ services:
       #   - "100.119.136.93:24642:24642/udp"
       # Leaving it unbound (below) publishes it on ALL host interfaces (public).
       - "24642:24642/udp"
+
+      # VNC / web console — NEVER expose publicly. Reach it over an SSH tunnel or Tailscale.
+      # Web (noVNC): http://localhost:6080/vnc.html  (default = localhost only, tunnel in)
+      - "127.0.0.1:6080:6080"
+      # Raw VNC for a native client on the tailnet (optional — set your host's Tailscale IP):
+      # - "100.x.y.z:5900:5900"
 
     # The game loop runs ~1 core continuously even with an empty farm (Xvfb + 60fps tick).
     cpus: 1.0

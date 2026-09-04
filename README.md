@@ -72,9 +72,18 @@ mods/
     ...
 ```
 
-### 4. Add your host save
-Create a co-op farm on your PC (New → Co-op → add cabins → play a day → sleep to save),
-then copy the save folder into `./saves`:
+### 4. Get a multiplayer host save
+
+The server hosts an existing co-op save; it doesn't create one. Two ways to make it:
+
+**Option A — create it in the built-in web console (recommended, no PC install).**
+Since there's no save yet, the game boots to the title screen. Bring the server up
+(step 6), open the web console, and create the world interactively — then it's saved
+for good. See [First-time world creation](#first-time-world-creation) below.
+
+**Option B — create it on your PC and upload.**
+Play Stardew on any PC: New → Co-op → add cabins → play day 1 → **sleep to save**.
+Then copy the whole save folder into `./saves`:
 ```
 saves/
   Farmhands_123456789/
@@ -82,7 +91,7 @@ saves/
     SaveGameInfo
     ...
 ```
-Save locations on your PC: `~/.config/StardewValley/Saves` (Linux/macOS) or
+Save locations: `~/.config/StardewValley/Saves` (Linux/macOS) or
 `%APPDATA%\StardewValley\Saves` (Windows).
 
 ### 5. (Optional) tune the server
@@ -100,6 +109,24 @@ First boot installs SMAPI, loads your save, and starts hosting. Watch for
 `Server Mode On!` in the logs.
 
 ---
+
+## First-time world creation
+
+If you have no save yet, the game boots to the title screen and waits. Create the world
+through the built-in **web console** (noVNC) — no second PC or game install needed.
+
+1. Set a `VNC_PASSWORD` in `docker-compose.yml` and `docker compose up -d --build`.
+2. Reach the console (it's bound to localhost by default — tunnel in):
+   ```bash
+   ssh -L 6080:localhost:6080 you@your-server
+   # then open http://localhost:6080/vnc.html and enter the VNC password
+   ```
+   (Or bind `5900` to your Tailscale IP and use any VNC client.)
+3. In the game: **New** → set **cabins** (= how many farmhands) → pick farm type & name →
+   start → walk to the bed and **sleep** to save day 1.
+4. Done — the save now lives in `./saves`. On the next restart, **Auto Load Game** loads it
+   and the server hosts automatically (`Server Mode On!`). The web console stays available
+   for admin (watch the farm, run SMAPI console commands).
 
 ## Connecting
 
@@ -138,9 +165,18 @@ docker compose restart            # restart the server
 docker compose down               # stop
 ```
 
-- **Saves** persist in `./saves` (mounted into the game's Saves dir). Back this up.
+- **Saves** persist in `./saves` (mounted into the game's Saves dir).
 - **SMAPI + mods** are (re)synced into `./game/Mods` on every start.
 - Update SMAPI by bumping `SMAPI_VERSION` in `docker-compose.yml` and rebuilding.
+
+### Backups
+SMAPI bundles a **Save Backup** mod that zips your saves on every launch (kept under
+`./game/Mods/SaveBackup/backups`). For off-box safety, also snapshot `./saves` on a
+schedule, e.g. a nightly cron:
+```bash
+0 3 * * *  tar czf ~/sdv-backups/saves-$(date +\%F).tgz -C /path/to/stardew-dedicated-server saves
+```
+(Point the tarball at object storage / another host if you want true off-site backups.)
 
 ---
 

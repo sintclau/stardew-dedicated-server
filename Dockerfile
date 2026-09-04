@@ -26,6 +26,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       xvfb x11-xserver-utils xauth xdotool \
+      x11vnc novnc websockify \
       libgl1-mesa-dri libglx-mesa0 libgl1 libegl1 \
       libopenal1 libsdl2-2.0-0 libvorbisfile3 \
       libgdiplus libicu72 libssl3 zlib1g \
@@ -50,5 +51,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Stardew LAN / direct-IP multiplayer port. Friends use "Join LAN Game" -> your IP.
 EXPOSE 24642/udp
+# VNC (5900) + noVNC web console (6080). For world creation / admin ONLY — never public.
+EXPOSE 5900 6080
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint.sh"]

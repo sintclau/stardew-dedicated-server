@@ -61,6 +61,23 @@ done
 cleanup() { kill "${XVFB_PID}" 2>/dev/null || true; }
 trap cleanup EXIT
 
-echo ">> Launching SMAPI (Stardew Valley) headless ..."
+# ── 5. Optional VNC + web console (world creation / admin) ───────────────────────
+# Attach a VNC server to the virtual display and serve it over the web via noVNC.
+# Use this to create your co-op farm the first time (there's no save yet, so the game
+# sits at the title screen — connect and click through New -> Co-op -> sleep to save).
+# SECURITY: bind ports to Tailscale/localhost in docker-compose.yml. Never expose publicly.
+if [ -n "${VNC_PASSWORD:-}" ]; then
+  echo ">> Starting VNC (:5900) + noVNC web (:6080) ..."
+  mkdir -p "${HOME}/.vnc"
+  x11vnc -storepasswd "${VNC_PASSWORD}" "${HOME}/.vnc/passwd" >/dev/null 2>&1
+  x11vnc -display "${DISPLAY}" -rfbauth "${HOME}/.vnc/passwd" \
+         -forever -shared -noxdamage -rfbport 5900 -bg -quiet
+  websockify --web=/usr/share/novnc 6080 localhost:5900 >/dev/null 2>&1 &
+  echo "   Web console: http://<host>:6080/vnc.html"
+else
+  echo ">> VNC disabled (VNC_PASSWORD not set)."
+fi
+
+echo ">> Launching SMAPI (Stardew Valley) ..."
 cd "${GAME_DIR}"
 exec ./StardewModdingAPI
