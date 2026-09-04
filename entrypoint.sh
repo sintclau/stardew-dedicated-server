@@ -19,7 +19,10 @@ fi
 # Creates the StardewModdingAPI launcher + a Mods/ folder with SMAPI's bundled mods.
 if [ ! -x "${GAME_DIR}/StardewModdingAPI" ]; then
   echo ">> Installing SMAPI into ${GAME_DIR} ..."
-  INSTALLER_BIN="$(find /opt/smapi-installer -type f -name 'SMAPI.Installer' | head -n1)"
+  # The installer zip ships a SMAPI.Installer for EACH OS (linux/macOS/windows), all
+  # named the same — pick the Linux one explicitly, else we'd try to exec a Mach-O/PE.
+  INSTALLER_BIN="$(find /opt/smapi-installer -type f -ipath '*/linux/*' -name 'SMAPI.Installer' | head -n1)"
+  [ -z "${INSTALLER_BIN}" ] && INSTALLER_BIN="$(find /opt/smapi-installer -type f -name 'SMAPI.Installer' | head -n1)"
   if [ -z "${INSTALLER_BIN}" ]; then
     echo "!! Could not find SMAPI.Installer under /opt/smapi-installer"; exit 1
   fi
