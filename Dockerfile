@@ -25,7 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     XDG_CONFIG_HOME=/data/home/.config
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      xvfb x11-xserver-utils xauth xdotool \
+      xvfb x11-xserver-utils xauth xdotool wmctrl openbox \
       x11vnc novnc websockify \
       libgl1-mesa-dri libglx-mesa0 libgl1 libegl1 \
       libopenal1 libsdl2-2.0-0 libvorbisfile3 \

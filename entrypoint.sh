@@ -61,6 +61,25 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 
+# Minimal window manager so the game window is positioned/sized correctly. Without one,
+# the game opens off-center and the rest of the virtual screen stays black.
+echo ">> Starting openbox window manager ..."
+openbox &
+
+# Once the game window appears, force it to fill the screen (belt-and-suspenders on top
+# of the WM, in case the game opens small/offset). Runs in the background.
+(
+  for _ in $(seq 1 120); do
+    WID="$(xdotool search --name 'Stardew Valley' 2>/dev/null | head -n1)"
+    if [ -n "${WID}" ]; then
+      wmctrl -i -r "${WID}" -b add,maximized_vert,maximized_horz 2>/dev/null || true
+      xdotool windowmove "${WID}" 0 0 windowsize "${WID}" 100% 100% 2>/dev/null || true
+      break
+    fi
+    sleep 1
+  done
+) &
+
 cleanup() { kill "${XVFB_PID}" 2>/dev/null || true; }
 trap cleanup EXIT
 
