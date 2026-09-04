@@ -169,6 +169,14 @@ docker compose down               # stop
 - **SMAPI + mods** are (re)synced into `./game/Mods` on every start.
 - Update SMAPI by bumping `SMAPI_VERSION` in `docker-compose.yml` and rebuilding.
 
+### Ending the day (important for mobile players)
+The host bot only goes to bed at a fixed `timeOfDayToSleep`, and Stardew only ends the
+day once **everyone** (host included) is in bed — so if you sleep earlier, you wait for
+that time. Mobile clients can't easily use the `sleep` chat keyword, so set
+`timeOfDayToSleep` **low** (e.g. `610` = 06:10) in `config/unattended-config.json`. The
+host is then always "ready to sleep", and the day ends the moment the players go to bed —
+no chat needed. (The host just appears asleep during the day; purely cosmetic.)
+
 ### Backups
 SMAPI bundles a **Save Backup** mod that zips your saves on every launch (kept under
 `./game/Mods/SaveBackup/backups`). For off-box safety, also snapshot `./saves` on a
