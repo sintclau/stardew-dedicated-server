@@ -1,0 +1,3 @@
+# Put extra SMAPI mods here (one folder per mod, each containing a manifest.json).
+# At minimum you need "Auto Load Game" (Nexus mod #2509) so the server auto-loads
+# your host save at boot. This folder is mounted read-only into the container.

@@ -1,0 +1,6 @@
+# Put your multiplayer HOST save folder here (e.g. "Farmhands_123456789/").
+# Create the farm on your own PC first: New -> Co-op -> add cabins -> play one day ->
+# sleep to save, then copy the save folder from:
+#   Windows: %APPDATA%\StardewValley\Saves
+#   Linux:   ~/.config/StardewValley/Saves
+#   macOS:   ~/.config/StardewValley/Saves

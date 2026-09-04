@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Boot sequence: install SMAPI (once) -> sync mods -> start Xvfb -> run SMAPI headless.
+# Auto Load Game (a mod you supply in ./mods) loads your host save, which flips the
+# unattended-server mod into "Server Mode On" and starts hosting for co-op.
+set -euo pipefail
+
+GAME_DIR="${GAME_DIR:-/data/game}"
+SCREEN_RES="${SCREEN_RES:-1280x720x24}"
+
+# ── 0. Sanity: is a Linux game build actually mounted? ──────────────────────────
+if [ ! -e "${GAME_DIR}/Stardew Valley.dll" ] && [ ! -e "${GAME_DIR}/StardewValley.dll" ]; then
+  echo "!! No Stardew Valley Linux build found at ${GAME_DIR}"
+  echo "   Extract your GOG/Steam *Linux* build there (see scripts/extract-game.sh)."
+  echo "   Expected files: 'Stardew Valley.dll', 'StardewValley' launcher, Content/, lib*.so"
+  exit 1
+fi
+
+# ── 1. Install SMAPI into the game dir (idempotent) ─────────────────────────────
+# Creates the StardewModdingAPI launcher + a Mods/ folder with SMAPI's bundled mods.
+if [ ! -x "${GAME_DIR}/StardewModdingAPI" ]; then
+  echo ">> Installing SMAPI into ${GAME_DIR} ..."
+  INSTALLER_BIN="$(find /opt/smapi-installer -type f -name 'SMAPI.Installer' | head -n1)"
+  if [ -z "${INSTALLER_BIN}" ]; then
+    echo "!! Could not find SMAPI.Installer under /opt/smapi-installer"; exit 1
+  fi
+  ( cd "$(dirname "${INSTALLER_BIN}")" \
+      && chmod +x ./SMAPI.Installer \
+      && ./SMAPI.Installer --install --game-path "${GAME_DIR}" --no-prompt )
+else
+  echo ">> SMAPI already installed, skipping."
+fi
+
+# ── 2. Sync mods: baked unattended-server mod + your extra mods from /data/mods ──
+mkdir -p "${GAME_DIR}/Mods"
+cp -r /opt/baked-mods/. "${GAME_DIR}/Mods/" 2>/dev/null || true
+if [ -d /data/mods ] && [ -n "$(ls -A /data/mods 2>/dev/null)" ]; then
+  echo ">> Installing user mods from /data/mods ..."
+  cp -r /data/mods/. "${GAME_DIR}/Mods/" 2>/dev/null || true
+fi
+
+# ── 3. Optional: overlay a custom unattended-server config.json ─────────────────
+if [ -f /data/config/unattended-config.json ]; then
+  echo ">> Applying custom unattended-server config ..."
+  while IFS= read -r cfg; do
+    cp /data/config/unattended-config.json "${cfg}"
+  done < <(find "${GAME_DIR}/Mods" -maxdepth 2 -iname config.json -ipath '*Unattended*')
+fi
+
+# ── 4. Virtual display (software GL) + SMAPI, headless ──────────────────────────
+mkdir -p "${XDG_CONFIG_HOME}"
+echo ">> Starting Xvfb on ${DISPLAY} (${SCREEN_RES}) ..."
+Xvfb "${DISPLAY}" -screen 0 "${SCREEN_RES}" -nolisten tcp &
+XVFB_PID=$!
+
+# Wait for X to accept connections before launching the game.
+for _ in $(seq 1 40); do
+  xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1 && break
+  sleep 0.25
+done
+
+cleanup() { kill "${XVFB_PID}" 2>/dev/null || true; }
+trap cleanup EXIT
+
+echo ">> Launching SMAPI (Stardew Valley) headless ..."
+cd "${GAME_DIR}"
+exec ./StardewModdingAPI

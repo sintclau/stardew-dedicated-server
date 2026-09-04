@@ -1,0 +1,17 @@
+{
+  "//": "Copy to config/unattended-config.json to override StardewUnattendedServer defaults.",
+  "//serverHotKey": "Ignored headlessly, but the mod reads it.",
+  "serverHotKey": "F9",
+  "autoLevel": false,
+  "profitmargin": 100,
+  "upgradeHouse": 0,
+  "petname": "Qwerty",
+  "farmcavechoicemushrooms": true,
+  "communitycenterrun": true,
+  "timeOfDayToSleep": 700,
+  "lockPlayerChests": false,
+  "clientsCanPause": false,
+  "copyInviteCodeToClipboard": false,
+  "festivalsOn": true,
+  "endofdayTimeOut": 300
+}

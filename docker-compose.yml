@@ -1,0 +1,38 @@
+# Stardew Valley 1.6 headless dedicated server.
+#
+# Before `docker compose up -d --build`:
+#   1) scripts/extract-game.sh /path/to/stardew_valley.sh   -> populates ./game
+#   2) drop "Auto Load Game" (Nexus #2509) into ./mods
+#   3) put a multiplayer HOST save into ./saves  (create it first on your PC)
+# See README.md for the full walkthrough.
+services:
+  stardew:
+    build:
+      context: .
+      args:
+        # Bump to match your Stardew version (see https://smapi.io).
+        SMAPI_VERSION: "4.5.2"
+    image: stardew-dedicated-server:local
+    container_name: stardew
+    restart: unless-stopped
+
+    environment:
+      SCREEN_RES: "1280x720x24"
+
+    volumes:
+      - ./game:/data/game                                    # extracted Linux game build
+      - ./saves:/data/home/.config/StardewValley/Saves       # your multiplayer host save(s)
+      - ./mods:/data/mods:ro                                 # extra mods (e.g. Auto Load Game)
+      - ./config:/data/config:ro                             # optional config overrides
+
+    ports:
+      # Stardew LAN / direct-IP port. Friends join via "Co-op -> Join LAN Game -> <your IP>".
+      # SECURITY: to expose ONLY over Tailscale, bind to the tailnet IP, e.g.:
+      #   - "100.119.136.93:24642:24642/udp"
+      # Leaving it unbound (below) publishes it on ALL host interfaces (public).
+      - "24642:24642/udp"
+
+    # The game loop runs ~1 core continuously even with an empty farm (Xvfb + 60fps tick).
+    cpus: 1.0
+    mem_limit: 2g
+    stop_grace_period: 30s

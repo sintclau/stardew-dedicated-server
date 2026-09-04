@@ -1,0 +1,16 @@
+# Your game files — NEVER commit these (you own the game; don't redistribute it).
+/game/
+
+# Saves and any extra mods you drop in locally.
+/saves/*
+!/saves/.gitkeep
+/mods/*
+!/mods/.gitkeep
+
+# Local config with real values.
+/config/unattended-config.json
+
+# GOG/Steam installers you might leave lying around.
+*.sh.installer
+setup_*.exe
+stardew_valley*.sh
