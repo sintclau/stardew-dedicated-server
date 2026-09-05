@@ -21,6 +21,9 @@ services:
       # Enables the VNC + web console (for first-time world creation & admin).
       # Leave empty to disable entirely. CHANGE THIS.
       VNC_PASSWORD: "change-me"
+      # Seconds to wait after the world loads before pressing F9 to start the server
+      # mod. Increase if your save is big/slow to load; set 0 to start it manually via VNC.
+      SERVER_AUTOSTART_DELAY: "60"
 
     volumes:
       - ./game:/data/game                                    # extracted Linux game build

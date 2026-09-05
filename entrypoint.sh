@@ -100,6 +100,28 @@ else
   echo ">> VNC disabled (VNC_PASSWORD not set)."
 fi
 
+# ── 6. Auto-start the unattended server (press the serverHotKey / F9) ────────────
+# The mod only auto-enables if the save loads already in host mode. With a headless
+# autoloader it doesn't, so we press F9 once after the world has loaded to flip it on.
+# Tune SERVER_AUTOSTART_DELAY to your save's load time; set 0 to disable (press F9 via VNC).
+AUTOSTART_DELAY="${SERVER_AUTOSTART_DELAY:-60}"
+if [ "${AUTOSTART_DELAY}" -gt 0 ] 2>/dev/null; then
+  (
+    # wait for the game window, then give the save time to finish loading
+    for _ in $(seq 1 120); do
+      xdotool search --name 'Stardew Valley' >/dev/null 2>&1 && break
+      sleep 1
+    done
+    sleep "${AUTOSTART_DELAY}"
+    WID="$(xdotool search --name 'Stardew Valley' 2>/dev/null | head -n1)"
+    if [ -n "${WID}" ]; then
+      xdotool windowactivate --sync "${WID}" 2>/dev/null || true
+      xdotool key F9 2>/dev/null || true
+      echo ">> Sent F9 to auto-start unattended server mode (delay ${AUTOSTART_DELAY}s)."
+    fi
+  ) &
+fi
+
 echo ">> Launching SMAPI (Stardew Valley) ..."
 cd "${GAME_DIR}"
 exec ./StardewModdingAPI
