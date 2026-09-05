@@ -100,28 +100,43 @@ else
   echo ">> VNC disabled (VNC_PASSWORD not set)."
 fi
 
-# ── 6. Auto-start the unattended server (press the serverHotKey / F9) ────────────
-# The mod only auto-enables if the save loads already in host mode. With a headless
-# autoloader it doesn't, so we press F9 once after the world has loaded to flip it on.
-# Tune SERVER_AUTOSTART_DELAY to your save's load time; set 0 to disable (press F9 via VNC).
+# ── 6. Auto-start the unattended server, driven by the mod's own log ─────────────
+# The mod only auto-enables if the save loads already in host mode; with a headless
+# autoloader it doesn't, so it stays off (and farmhand joins NPE). We watch its log for
+# "Server Mode On!" and press F9 ONLY while it's still off — so we never toggle it back.
+# SERVER_AUTOSTART_DELAY = grace period before the first check; set 0 to disable (use VNC).
+echo ">> Launching SMAPI (Stardew Valley) ..."
+cd "${GAME_DIR}"
+
+CONSOLE_LOG=/tmp/smapi-console.log
+: > "${CONSOLE_LOG}"
+
 AUTOSTART_DELAY="${SERVER_AUTOSTART_DELAY:-60}"
 if [ "${AUTOSTART_DELAY}" -gt 0 ] 2>/dev/null; then
   (
-    # wait for the game window, then give the save time to finish loading
-    for _ in $(seq 1 120); do
+    # wait for the game window to exist, then a grace period for the save to load
+    for _ in $(seq 1 180); do
       xdotool search --name 'Stardew Valley' >/dev/null 2>&1 && break
       sleep 1
     done
     sleep "${AUTOSTART_DELAY}"
-    WID="$(xdotool search --name 'Stardew Valley' 2>/dev/null | head -n1)"
-    if [ -n "${WID}" ]; then
-      xdotool windowactivate --sync "${WID}" 2>/dev/null || true
-      xdotool key F9 2>/dev/null || true
-      echo ">> Sent F9 to auto-start unattended server mode (delay ${AUTOSTART_DELAY}s)."
-    fi
+    # press F9 until the mod confirms it's on (log line), then stop
+    for _ in $(seq 1 20); do
+      if grep -q 'Server Mode On!' "${CONSOLE_LOG}" 2>/dev/null; then
+        echo ">> Unattended server is ON."
+        exit 0
+      fi
+      WID="$(xdotool search --name 'Stardew Valley' 2>/dev/null | head -n1)"
+      if [ -n "${WID}" ]; then
+        xdotool windowactivate --sync "${WID}" 2>/dev/null || true
+        xdotool key F9 2>/dev/null || true
+        echo ">> Server mode off — pressed F9, waiting for confirmation ..."
+      fi
+      sleep 12   # long enough for the mod to log the state change before re-checking
+    done
+    echo ">> WARNING: could not confirm 'Server Mode On!' — check the VNC console."
   ) &
 fi
 
-echo ">> Launching SMAPI (Stardew Valley) ..."
-cd "${GAME_DIR}"
-exec ./StardewModdingAPI
+# Tee the game's output so both `docker logs` and the watcher above can read it.
+exec ./StardewModdingAPI > >(tee -a "${CONSOLE_LOG}") 2>&1
